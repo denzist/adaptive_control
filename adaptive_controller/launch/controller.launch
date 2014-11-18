@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+
+  <node name="velocity_estimator" pkg="adaptive_controller" type="velocity_estimator.py" output="screen"/>
+
+  <node name="data_assembler" pkg="adaptive_controller" type="data_assembler" output="screen"/>
+
+  <node name="learning_node" pkg="adaptive_controller" type="learning_node.py" output="screen"/>
+
+  <node name="adaptive_controller" pkg="adaptive_controller" type="controller.py" output="screen"/>
+
+</launch>

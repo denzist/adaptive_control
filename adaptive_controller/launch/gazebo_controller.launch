@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<launch>
+
+  <node name="velocity_from_odom_collector" pkg="adaptive_controller" type="velocity_from_odom_collector.py" output="screen">
+  	<param name="odom" value="/gazebo/ground_truth_pose" />
+  	<param name="vel" value="/est_vel_stamped"/>
+  </node>
+
+  <node name="data_assembler" pkg="adaptive_controller" type="data_assembler" output="screen">
+  	<param name="cmd_vel_stamped" value="/gazebo/cmd_vel_stamped" />
+  	<param name="est_vel_stamped" value="/est_vel_stamped" />
+  	<param name="training_set" value="/training_set" />
+  </node>
+
+  <node name="learning_node" pkg="adaptive_controller" type="learning_node.py" output="screen">
+  	<param name="enhancing_matrix" value="/enhancing_matrix" />
+  	<param name="training_set" value="/training_set" />
+    <param name="error" value="0.0" />
+  </node>
+
+  <node name="adaptive_controller" pkg="adaptive_controller" type="controller.py" output="screen">
+  	<param name="cmd_vel" value="/gazebo/cmd_vel" />
+  	<param name="enhancing_matrix" value="/enhancing_matrix"/>
+  	<param name="control" value="/gazebo/control_vector"/>
+  </node>
+
+
+</launch>
