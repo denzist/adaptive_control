@@ -96,11 +96,24 @@ public:
 		data_set_topic_("/training_set"),
 		smoothing_(2.0/31.0)
 	{
+
+	}
+
+	DataAssembler(int max_size):
+		node_name_("data_assembler"),
+		est_vel_topic_("/estimated_vel_stamped"),
+		cmd_vel_topic_("/cmd_vel_stamped"),
+		data_set_topic_("/training_set"),
+		smoothing_(2.0/(max_size+1)),
+		lin_(max_size),
+		ang_(max_size)
+	{
+
 	}
 
 	void start()
 	{
-		node_ = new ros::NodeHandle(node_name_);
+		node_ = new ros::NodeHandle("~");
 		node_->param("cmd_vel_stamped", cmd_vel_topic_, cmd_vel_topic_);
 		node_->param("est_vel_stamped", est_vel_topic_, est_vel_topic_);
 		node_->param("training_set", data_set_topic_, data_set_topic_);
@@ -244,7 +257,9 @@ public:
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "data_set_collector");
-	DataAssembler data_collector;
+	int size = 30;
+	ros::param::param<int>("~size", size, 30);
+	DataAssembler data_collector(size);
 	data_collector.start();
 	return 0;
 }

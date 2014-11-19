@@ -32,6 +32,7 @@ class Learning(object):
 		self.ang_period = 0
 		self.lin_period = 0
 		self.error = 0.1
+		self.size = 30
 
 	def train(self):
 		rospy.init_node(self.node_name)
@@ -41,6 +42,8 @@ class Learning(object):
 			self.enhancing_matrix_topic = rospy.get_param('~enhancing_matrix')
 		if rospy.has_param('~error'):
 			self.error = rospy.get_param('~error')
+		if rospy.has_param('~size'):
+			self.size = rospy.get_param('~size')
 		self.publisher = rospy.Publisher(self.enhancing_matrix_topic, ControlMatrix, queue_size=10)
 		self.subscriber = rospy.Subscriber(self.data_set_topic, DataSet, self.update)
 		rospy.spin()
@@ -51,7 +54,7 @@ class Learning(object):
 		if data_set.ang_col != 0:
 			self.ang_period += 1
 			ang_control_submatrix = np.identity(3)
-			if self.ang_period%30 == 0:
+			if self.ang_period%self.size == 0:
 				cmd_ang = np.array(data_set.cmd_ang).reshape(data_set.ang_col, data_set.ang_row)
 				est_ang = np.array(data_set.est_ang).reshape(data_set.ang_col, data_set.ang_row)
 				if self.is_bad(cmd_ang, est_ang):
@@ -62,7 +65,7 @@ class Learning(object):
 		if data_set.lin_col != 0:
 			self.lin_period += 1
 			lin_control_submatrix = np.identity(3)
-			if self.lin_period%30 == 0:
+			if self.lin_period%self.size == 0:
 				cmd_lin = np.array(data_set.cmd_lin).reshape(data_set.lin_col, data_set.lin_row)
 				est_lin = np.array(data_set.est_lin).reshape(data_set.lin_col, data_set.lin_row)
 				if self.is_bad(cmd_lin, est_lin):

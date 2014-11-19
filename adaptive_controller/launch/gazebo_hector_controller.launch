@@ -10,12 +10,14 @@
   	<param name="cmd_vel_stamped" value="/gazebo/cmd_vel_stamped" />
   	<param name="est_vel_stamped" value="/est_vel_stamped" />
   	<param name="training_set" value="/training_set" />
+    <param name="size" value="30" />
   </node>
 
   <node name="learning_node" pkg="adaptive_controller" type="learning_node.py" output="screen">
   	<param name="enhancing_matrix" value="/enhancing_matrix" />
   	<param name="training_set" value="/training_set" />
-    <param name="error" value="0.1" />
+    <param name="error" value="0.05" />
+    <param name="size" value="30" />
   </node>
 
   <node name="adaptive_controller" pkg="adaptive_controller" type="controller.py" output="screen">
