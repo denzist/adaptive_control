@@ -7,12 +7,14 @@ add_message_files(
   FILES
   ControlMatrix.msg
   DataSet.msg
+  Data.msg
 )
 
 generate_messages(
   DEPENDENCIES
   std_msgs
   geometry_msgs
+  control_msgs
 )
 
 catkin_package(CATKIN_DEPENDS message_runtime)

@@ -12,7 +12,7 @@ from control_msgs.msg import ControlVector
 roslib.load_manifest('adaptive_controller')
 
 class Controller(object):
-  def __init__(self, node_name='robot_controller', cmd_vel_topic='/cmd_vel', enhancing_matrix_topic='/enhancing_matrix', control_topic='/control_vector'):
+  def __init__(self, node_name='robot_controller', cmd_vel_topic='/gazebo/cmd_vel', enhancing_matrix_topic='/enhancing_matrix', control_topic='/control_vector'):
     self.enhancing_matrix_topic = enhancing_matrix_topic
     self.cmd_vel_topic = cmd_vel_topic
     self.control_topic = control_topic

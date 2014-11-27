@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<launch>
+
+  <node name="velocity_estimator" pkg="adaptive_controller" type="velocity_estimator.py" output="screen">
+  	<param name="pose" value="/poseupdate" />
+  	<param name="est_vel_stamped" value="/est_vel_stamped"/>
+  </node>
+
+  <node name="data_assembler" pkg="adaptive_controller" type="data_assembler" output="screen">
+  	<param name="cmd_vel_stamped" value="/gazebo/cmd_vel_stamped" />
+  	<param name="est_vel_stamped" value="/est_vel_stamped" />
+    <param name="control" value="/gazebo/control_vector" />
+  	<param name="training_data" value="/training_data" />
+    <param name="rate" value="30" />
+  </node>
+
+  <!--node name="adaptive_controller" pkg="adaptive_controller" type="controller.py" output="screen">
+  	<param name="cmd_vel" value="/gazebo/cmd_vel" />
+  	<param name="enhancing_matrix" value="/enhancing_matrix"/>
+  	<param name="control" value="/gazebo/control_vector"/>
+  </node-->
+
+  <node name="learning_node" pkg="adaptive_controller" type="learning_node.py" output="screen">
+    <param name="data" value="/training_data" />
+    <param name="model" value="/model" />
+    <param name="size" value="40" />
+    <param name="alpha" value="0.05" />
+  </node>
+
+
+</launch>

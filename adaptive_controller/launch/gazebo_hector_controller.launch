@@ -6,18 +6,24 @@
   	<param name="est_vel_stamped" value="/est_vel_stamped"/>
   </node>
 
+  <node name="velocity_stamped_from_velocity_collector" pkg="adaptive_controller" type="velocity_stamped_from_velocity_collector.py" output="screen">
+    <param name="vel_stamped" value="/gazebo/cmd_vel_stamped" />
+    <param name="vel" value="/gazebo/cmd_vel"/>
+  </node>
+
   <node name="data_assembler" pkg="adaptive_controller" type="data_assembler" output="screen">
   	<param name="cmd_vel_stamped" value="/gazebo/cmd_vel_stamped" />
   	<param name="est_vel_stamped" value="/est_vel_stamped" />
   	<param name="training_set" value="/training_set" />
-    <param name="size" value="30" />
+    <param name="size" value="10" />
   </node>
+
 
   <node name="learning_node" pkg="adaptive_controller" type="learning_node.py" output="screen">
   	<param name="enhancing_matrix" value="/enhancing_matrix" />
   	<param name="training_set" value="/training_set" />
-    <param name="error" value="0.05" />
-    <param name="size" value="30" />
+    <param name="error" value="0.1" />
+    <param name="size" value="10" />
   </node>
 
   <node name="adaptive_controller" pkg="adaptive_controller" type="controller.py" output="screen">

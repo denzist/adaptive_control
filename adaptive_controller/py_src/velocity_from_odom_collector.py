@@ -36,7 +36,7 @@ class VelocityFromOdometryCollector(object):
 			self.odom_topic = rospy.get_param('~odom')
 		if rospy.has_param('~vel'):
 			self.velocity_topic = rospy.get_param('~vel')
-		vel_sub = rospy.Subscriber(self.odom_topic, Odometry, self.update)
+		odom_sub = rospy.Subscriber(self.odom_topic, Odometry, self.update)
 		self.velocity_publisher = rospy.Publisher(self.velocity_topic, TwistStamped, queue_size=10)
 		rospy.spin()
 
