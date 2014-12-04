@@ -12,39 +12,43 @@ from control_msgs.msg import ControlVector
 roslib.load_manifest('adaptive_controller')
 
 class Controller(object):
-  def __init__(self, node_name='robot_controller', cmd_vel_topic='/gazebo/cmd_vel', enhancing_matrix_topic='/enhancing_matrix', control_topic='/control_vector'):
-    self.enhancing_matrix_topic = enhancing_matrix_topic
-    self.cmd_vel_topic = cmd_vel_topic
+  def __init__(self, node_name='robot_controller', cmd_topic='/gazebo/cmd_vel', model_topic='/model', control_topic='/gazebo/control_vector'):
+    self.model_topic = model_topic
+    self.cmd_topic = cmd_topic
     self.control_topic = control_topic
     self.node_name = node_name
-    self.enhancing_matrix = np.identity(2)
-    self.kinematic_matrix = np.array([[1.0, 1.0, 1.0, 1.0], [-1.0, -1.0, 1.0, 1.0]])
-    #self.enhancing_matrix = np.array([[10.0, 0.0], [0.0, 3.16]])
-
+    #self.model = np.array([[1./ 40., 1./ 40., 1./ 40., 1./ 40.] ,  [-1./(4.*3.16), -1./(4.*3.16), 1./(4.*3.16), 1./(4.*3.16)]])
+    self.model = np.array([[1./ 4., 1./ 4., 1./ 4., 1./ 4.] ,  [-1./(4.), -1./(4.), 1./(4.), 1./(4.)]])
 
   def control(self):
     rospy.init_node(self.node_name)
     if rospy.has_param('~cmd_vel'):
-      self.cmd_vel_topic = rospy.get_param('~cmd_vel')
-    if rospy.has_param('~enhancing_matrix'):
-      self.enhancing_matrix_topic = rospy.get_param('~enhancing_matrix')
+        self.cmd_topic = rospy.get_param('~cmd_vel')
     if rospy.has_param('~control'):
-      self.control_topic = rospy.get_param('~control')
-    self.publisher = rospy.Publisher(self.control_topic, ControlVector, queue_size=10)
-    self.subscriber = rospy.Subscriber(self.enhancing_matrix_topic, ControlMatrix, self.update_matrix)
-    while not rospy.is_shutdown():
-      vel = self.vel_to_list(rospy.wait_for_message(self.cmd_vel_topic, Twist))
-      vel = [vel[0], vel[5]]
-      enh_vel = np.dot(np.array(vel), self.enhancing_matrix).tolist()
-      control = np.dot(enh_vel, self.kinematic_matrix).tolist()
-      msg = ControlVector()
-      msg.header.stamp = rospy.get_rostime()
-      msg.length = len(control)
-      msg.control = control
-      self.publisher.publish(msg)
+        self.control_topic = rospy.get_param('~control')
+    if rospy.has_param('~model'):
+        self.model_topic = rospy.get_param('~model')
 
-  def update_matrix(self, enhancing_matrix):
-    self.enhancing_matrix = np.array(enhancing_matrix.control).reshape((enhancing_matrix.col, enhancing_matrix.row))
+    self.pub = rospy.Publisher(self.control_topic, ControlVector, queue_size=10)
+    self.vel_sub = rospy.Subscriber(self.cmd_topic, Twist, self.update)
+    self.model_sub = rospy.Subscriber(self.model_topic, ControlMatrix, self.update_model)
+    while not rospy.is_shutdown():
+      rospy.spin()
+
+  def update_model(self, model):
+    self.model = np.array(model.control).reshape((model.col, model.row))
+    rospy.loginfo(self.model)
+
+  def update(self, v):
+    vel =  self.vel_to_list(v)
+    b = [vel[0], vel[5]]
+    a = self.model
+    u = np.linalg.lstsq(a, b)[0].tolist()
+    msg = ControlVector()
+    msg.header.stamp = rospy.get_rostime()
+    msg.length = len(u)
+    msg.control = u
+    self.pub.publish(msg)
 
   def vel_to_list(self, vel):
     return [vel.linear.x, vel.linear.y, vel.linear.z,

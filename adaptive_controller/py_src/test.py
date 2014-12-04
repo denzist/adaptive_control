@@ -32,6 +32,7 @@ if __name__ == '__main__':
 	b = np.array([1., -1.])
 	u = np.linalg.lstsq(a, b)
 	print u[0].tolist()
+	print abs([1., -1., -2.0])
 
 
 

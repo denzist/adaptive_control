@@ -67,6 +67,7 @@ class DataSet(object):
 	#swap and delete obs
 	def unite(self):
 		self.obs = self.obs + self.out
+		#self.obs = self.out
 		self.out = []
 
 
@@ -79,7 +80,7 @@ class Learning(object):
 		self.data_set = [DataSet(size), DataSet(size)]
 		self.size = size
 		#self.model = np.transpose(np.array([[1., 1., 1., 1.], [-1., -1., 1., 1.]])/4.)
-		self.model = np.transpose(np.array([[1./ 40., 1./ 40., 1./ 40., 1./ 40.] , [-1./(4.*3.16), -1./(4.*3.16), 1./(4.*3.16), 1./(4.*3.16)]]))
+		self.model = np.transpose(np.array([[2./ 40.] , [2./(4.*3.16)]]))
 		rospy.loginfo(self.model)
 		#initial distribution
 		sigma = 0.01
@@ -139,17 +140,26 @@ class Learning(object):
 		i = self.get_data_type_id(data_type)
 		self.data_set[i].unite()
 
+	def reject_outliers(self, a, b, submodel):
+		r = b - np.dot(a, submodel)
+		r = np.abs(r - np.median(r))
+		s = np.median(r)
+		l = len(r)
+		j = [i for i in range(0, l) if(r[i] < 2*s and r[i] > 2*s)]
+		return [np.delete(a, j, axis=0), np.delete(b, j)]
+
 	#TODO
 	def update_model(self, data_type):
 		i = self.get_data_type_id(data_type)
 		a = np.array(self.data_set[i].obs)[:,1:]
 		b = np.array(self.data_set[i].obs)[:,0]
+		a, b = self.reject_outliers(a, b, self.model[:, i])
 		submodel = np.linalg.lstsq(a, b)
 		residuals = (b - np.dot(a, submodel[0]))**2
 		sum_residuals = np.sum(residuals)
 		R_squared = 1 - sum_residuals / np.sum((b - b.mean())**2)
-		#self.model[:, i] = submodel[0]
-		#self.s[i] = np.sqrt(sum_residuals / self.get_size(data_type))
+		self.model[:, i] = submodel[0]
+		self.s[i] = np.sqrt(sum_residuals / self.get_size(data_type))
 		return [submodel[0], sum_residuals, R_squared]
 
 	def train(self):
@@ -162,11 +172,7 @@ class Learning(object):
 		#if v.lin.x != 0
 		if data.cmd_vel.twist.linear.x != 0.0:
 			v = np.sqrt(data.est_vel.twist.linear.x**2 + data.est_vel.twist.linear.y**2)
-			if data.cmd_vel.twist.linear.x >= 0:
-				v = v
-			else:
-				v= -v
-			d = [v] + list(data.control.control)
+			d = [v] + [abs(data.control.control[0] + data.control.control[2])]
 			self.add('lin', d)
 
 			if self.is_fully_updated('lin'):
@@ -178,7 +184,7 @@ class Learning(object):
 					rospy.loginfo(submodel)
 		#if v.ang.z = 0
 		if data.cmd_vel.twist.angular.z != 0.0:
-			d = [-data.est_vel.twist.angular.z] + list(data.control.control)
+			d = [abs(data.est_vel.twist.angular.z)] + [abs(data.control.control[0] - data.control.control[2])]
 			self.add('ang', d)
 
 			if self.is_fully_updated('ang'):
@@ -192,9 +198,14 @@ class Learning(object):
 			rospy.loginfo(self.model)
 			msg = ControlMatrix()
 			msg.header.stamp = rospy.get_rostime()
-			msg.row = self.model.shape[1]
-			msg.col = self.model.shape[0]
-			msg.control = self.model.reshape(msg.row*msg.col).tolist()
+			msg.row = 4
+			msg.col = 2
+			l = self.model[0][0]/2.
+			a = self.model[0][1]/2.
+			model = [l, l, l, l, -a, -a, a, a]
+			rospy.loginfo(model)
+			#msg.control = self.model.reshape(msg.row*msg.col).tolist()
+			msg.control = model
 			self.publisher.publish(msg)
 
 
